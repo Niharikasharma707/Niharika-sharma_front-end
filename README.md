@@ -1,70 +1,143 @@
-# Getting Started with Create React App
+SteelEye assignment --->
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Q1-Explain what a simple List component does.
 
-## Available Scripts
+This is a React component that renders a list of items, with each item represented by a
 
-In the project directory, you can run:
+element. List items are passed as an array of objects, with each object having a text property that represents the text to display for that item.
+The component consists of two sub-components, "SingleListItem" and "ListComponent".
 
-### `npm start`
+"SingleListItem" is a functional component that renders a single list item. He gets four props:
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+"index": a number representing the index of an item in the list
+"isSelected": boolean indicating whether the item is currently selected or not
+"onClickHandler": function that will be called when an item is clicked
+"text": a string representing the text to display for the item
+"ListComponent" is also a functional component that renders the entire list. He gets one prop:
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+"items": an array of objects representing list items
+Inside the "ListComponent" the "useEffect" hook is used to reset the "selectedIndex" state variable whenever the item prop changes. This is to ensure that if the list is re-rendered with new items, all previously selected items will be deselected.
 
-### `npm test`
+The "handleClick" function is a callback that will be called every time an item is clicked. It takes an "index" parameter representing the index of the item that was clicked and sets the state variable "selectedIndex" to that index.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Finally, the "items" array is mapped to the "SingleListItem" component array, passing each component the necessary props to render the corresponding list item. The "memo" function is used to optimize performance by storing components in memory and preventing unnecessary redraws when props have not changed.
 
-### `npm run build`
+Overall, this component provides basic list functionality that allows users to select one item at a time. When an item is selected, it is highlighted with a green background color, otherwise it is shown with a red background color.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Q2- What problems / warnings are there with the code?
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+There are several problems with the code:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+1- use of useState: In WrappedListComponent the state is declared incorrectly. const String [setSelectedIndex, selectedIndex] = useState(); should be changed to const [selectedIndex, setSelectedIndex] = useState(null);
 
-### `npm run eject`
+2- Using onClickHandler: In WrappedSingleListItem the onClickHandler prop is called immediately with the index argument instead of passing a function to be called when the element is clicked. To fix this, we can change onClick={onClickHandler(index)} to onClick={() => onClickHandler(index)}.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+3- Use of PropTypes: In WrappedListComponent, prop items are not properly defined in propTypes object. Instead of items: PropTypes.array(PropTypes.shapeOf({ text: PropTypes.string.isRequired })) it should be defined as items: PropTypes.arrayOf(PropTypes.shape({ text: PropTypes.string.isRequired })) . This ensures that the item prop is an array of objects with the text property being a required string.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+4- Using DefaultProps: In the WrappedListComponent, the prop item defaults to null. This can cause problems in the items.map function later in the code. Instead, we can give it a default value of an empty field by changing items: null to items: [].
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Question 3 - Fix, optimize and/or modify the component as you think is necessary.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
-## Learn More
+import PropTypes from 'prop-types';
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+const SingleListItem = memo(({ index, isSelected, onClickHandler, text }) => {
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+const handleClick = useCallback(() => {
 
-### Code Splitting
+onClickHandler(index);
+}, [index, onClickHandler]);
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+return (
 
-### Analyzing the Bundle Size
+<li
+    
+  style={{ backgroundColor: isSelected ? 'green' : 'red' }}
+    
+  onClick={handleClick}
+    
+>
+  {text}
+ 
+</li>
+);
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+});
 
-### Making a Progressive Web App
+SingleListItem.propTypes = {
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+index: PropTypes.number.isRequired,
 
-### Advanced Configuration
+isSelected: PropTypes.bool.isRequired,
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+onClickHandler: PropTypes.func.isRequired,
 
-### Deployment
+text: PropTypes.string.isRequired,
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+};
 
-### `npm run build` fails to minify
+const List = memo(({ items }) => {
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+const [selectedIndex, setSelectedIndex] = useState(null);
+
+useEffect(() => {
+
+setSelectedIndex(null);
+}, [items]);
+
+const handleClick = useCallback((index) => {
+
+setSelectedIndex(index);
+}, []);
+
+const listItems = useMemo(() => {
+
+return items.map((item, index) => (
+
+  <SingleListItem
+  
+    key={index}
+    
+    onClickHandler={handleClick}
+    
+    text={item.text}
+    
+    index={index}
+    
+    isSelected={selectedIndex === index}
+    
+  />
+ 
+));
+}, [handleClick, items, selectedIndex]);
+
+return <ul style={{ textAlign: 'left' }}>{listItems};
+
+});
+
+List.propTypes = {
+
+items: PropTypes.arrayOf(
+
+PropTypes.shape({
+
+  text: PropTypes.string.isRequired,
+  
+}).is required
+),
+
+};
+
+export default list;
+
+Changes made:
+
+• In the SingleListItem component, the onClick handler is updated to use the useCallback hook to remember the function and avoid unnecessary re-rendering. Also updated propTypes definitions to require index, isSelected, onClickHandler and text props.
+
+• State variables setSelectedIndex and selectedIndex are correctly defined in the List component. The useEffect hook is updated to reset the selectedIndex state variable when item support changes. The handleClick function is also updated to use the useCallback hook to remember. Finally, a useMemo hook is added to remember the list items to avoid unnecessary redraws.
+
+• The propTypes definitions for the List component are updated to require an object array with a text property.
+
+• DefaultProps for WrappedListComponent are removed as they are not necessary
+
